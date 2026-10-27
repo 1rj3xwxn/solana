@@ -1,5 +1,21 @@
 {
-  "cursor.completions.enabled": false,
+  "cursor.cpp.disabledLanguages": [
+    "rust",
+    "toml",
+    "json",
+    "jsonc",
+    "markdown",
+    "javascript",
+    "typescript",
+    "javascriptreact",
+    "typescriptreact",
+    "shellscript",
+    "yaml",
+    "plaintext",
+    "html",
+    "css",
+    "python"
+  ],
   "editor.inlineSuggest.enabled": false,
   "github.copilot.enable": {
     "*": false
@@ -41,5 +57,19 @@
   "editor.suggest.showFolders": false,
   "editor.suggest.showTypeParameters": false,
   "editor.suggest.showIssues": false,
-  "editor.suggest.showUsers": false
+  "editor.suggest.showUsers": false,
+
+  "[rust]": {
+    "editor.inlineSuggest.enabled": false,
+    "editor.quickSuggestions": {
+      "other": "on",
+      "comments": "off",
+      "strings": "off"
+    },
+    "editor.wordBasedSuggestions": "off",
+    "editor.snippetSuggestions": "none",
+    "editor.suggest.showKeywords": true
+  },
+  "rust-analyzer.completion.callable.snippets": "none",
+  "rust-analyzer.completion.postfix.enable": false
 }

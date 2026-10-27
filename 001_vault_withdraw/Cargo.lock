@@ -3822,6 +3822,7 @@ dependencies = [
  "solana-pubkey 3.0.0",
  "solana-sdk-ids",
  "solana-signer",
+ "solana-system-interface 2.0.0",
  "vault_withdraw",
 ]
 
