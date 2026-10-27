@@ -82,7 +82,7 @@ fn test_withdraw() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &vault, 2_000_000,
+            &user, &vault, 2_600_000,
         ))
         .send()
         .expect("fund vault");
@@ -152,7 +152,7 @@ fn test_pay() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &nest, 2_000_000,
+            &user, &nest, 2_050_000,
         ))
         .send()
         .expect("fund vault");
@@ -235,7 +235,7 @@ fn test_send_out() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &recipient, 2_000_000,
+            &user, &recipient, 2_500_000,
         ))
         .send()
         .expect("fund vault");
@@ -316,7 +316,7 @@ fn test_send_out_failed() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &nest, 2_000_002,
+            &user, &nest, 2_400_002,
         ))
         .send()
         .expect("fund vault");
@@ -339,7 +339,7 @@ fn test_send_out_failed() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &recipient, 2_000_000,
+            &user, &recipient, 2_400_000,
         ))
         .send()
         .expect("fund vault");
@@ -406,7 +406,7 @@ fn test_send_out_seeds_error() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &nest, 2_000_002,
+            &user, &nest, 2_030_002,
         ))
         .send()
         .expect("fund vault");
@@ -429,7 +429,7 @@ fn test_send_out_seeds_error() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &recipient, 2_000_000,
+            &user, &recipient, 2_300_000,
         ))
         .send()
         .expect("fund vault");
@@ -495,7 +495,7 @@ fn test_send_out_zero_amount() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &nest, 2_000_002,
+            &user, &nest, 2_200_002,
         ))
         .send()
         .expect("fund vault");
@@ -518,7 +518,7 @@ fn test_send_out_zero_amount() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &recipient, 2_000_000,
+            &user, &recipient, 2_200_000,
         ))
         .send()
         .expect("fund vault");
@@ -584,7 +584,7 @@ fn test_send_out_when_balance_insufficient() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &nest, 2_000_0000,
+            &user, &nest, 20_000_100,
         ))
         .send()
         .expect("fund vault");
@@ -607,7 +607,7 @@ fn test_send_out_when_balance_insufficient() {
     let fund_tx = program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user, &recipient, 2_000_000,
+            &user, &recipient, 2_010_000,
         ))
         .send()
         .expect("fund vault");
@@ -631,5 +631,64 @@ fn test_send_out_when_balance_insufficient() {
     let after = program.rpc().get_balance(&nest).expect("balance before");
     let error_text = format!("{withdraw_tx:?}");
     assert!(error_text.contains("Transfer: insufficient lamports"), "{error_text}");
+    assert_eq!(after, before)
+}
+
+#[test]
+fn test_send_out_when_balance_below_rent_exempt() {
+    let program_id = "5owRe6K1Yhn2f34HSiR7zh54Dne6xqwzjaKz9tr2EtKp";
+    let anchor_wallet = std::env::var("ANCHOR_WALLET").unwrap();
+    let payer = read_keypair_file(&anchor_wallet).unwrap();
+    let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
+    let program_id = Pubkey::try_from(program_id).unwrap();
+    let program = client.program(program_id).unwrap();
+    let user = payer.pubkey();
+    let user_new_keypair = solana_keypair::Keypair::new();
+    let user_new_address = user_new_keypair.pubkey();
+    let (nest, bump) = Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user, &nest, 2_900_001,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user,
+            &user_new_address,
+            2_000_011,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let recipient_keypair = solana_keypair::Keypair::new();
+    let recipient = recipient_keypair.pubkey();
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user, &recipient, 2_800_000,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let before = program.rpc().get_balance(&nest).expect("balance before");
+    let withdraw_tx = program
+        .request()
+        .accounts(vault_withdraw::accounts::SendOut {
+            user: user_new_address,
+            recipient,
+            nest,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::SendOut {amount: 2_900_000})
+        .signer(&user_new_keypair)
+        .send();
+    assert!(withdraw_tx.is_err());
+    let after = program.rpc().get_balance(&nest).expect("balance before");
+    let error_text = format!("{withdraw_tx:?}");
+    assert!(!error_text.contains("金额不能为0"), "{error_text}");
     assert_eq!(after, before)
 }
