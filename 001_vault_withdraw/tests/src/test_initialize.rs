@@ -692,3 +692,121 @@ fn test_send_out_when_balance_below_rent_exempt() {
     assert!(!error_text.contains("金额不能为0"), "{error_text}");
     assert_eq!(after, before)
 }
+
+#[test]
+fn test_send_out_when_balance_equal_rent_exempt() {
+    let program_id = "5owRe6K1Yhn2f34HSiR7zh54Dne6xqwzjaKz9tr2EtKp";
+    let anchor_wallet = std::env::var("ANCHOR_WALLET").unwrap();
+    let payer = read_keypair_file(&anchor_wallet).unwrap();
+    let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
+    let program_id = Pubkey::try_from(program_id).unwrap();
+    let program = client.program(program_id).unwrap();
+    let user = payer.pubkey();
+    let user_new_keypair = solana_keypair::Keypair::new();
+    let user_new_address = user_new_keypair.pubkey();
+    let (nest, bump) = Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user, &nest, 890_881,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user,
+            &user_new_address,
+            2_000_011,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let recipient_keypair = solana_keypair::Keypair::new();
+    let recipient = recipient_keypair.pubkey();
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user, &recipient, 2_800_000,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let before = program.rpc().get_balance(&nest).expect("balance before");
+    let withdraw_tx = program
+        .request()
+        .accounts(vault_withdraw::accounts::SendOut {
+            user: user_new_address,
+            recipient,
+            nest,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::SendOut {amount: 1})
+        .signer(&user_new_keypair)
+        .send();
+    assert!(withdraw_tx.is_ok());
+    let after = program.rpc().get_balance(&nest).expect("balance before");
+    let error_text = format!("{withdraw_tx:?}");
+    // assert!(!error_text.contains("金额不能为0"), "{error_text}");
+    assert_eq!(after + 1, before)
+}
+
+#[test]
+fn test_send_out_when_balance_equal_zero() {
+    let program_id = "5owRe6K1Yhn2f34HSiR7zh54Dne6xqwzjaKz9tr2EtKp";
+    let anchor_wallet = std::env::var("ANCHOR_WALLET").unwrap();
+    let payer = read_keypair_file(&anchor_wallet).unwrap();
+    let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
+    let program_id = Pubkey::try_from(program_id).unwrap();
+    let program = client.program(program_id).unwrap();
+    let user = payer.pubkey();
+    let user_new_keypair = solana_keypair::Keypair::new();
+    let user_new_address = user_new_keypair.pubkey();
+    let (nest, bump) = Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user, &nest, 890_881,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user,
+            &user_new_address,
+            2_000_011,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let recipient_keypair = solana_keypair::Keypair::new();
+    let recipient = recipient_keypair.pubkey();
+    let fund_tx = program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &user, &recipient, 2_800_000,
+        ))
+        .send()
+        .expect("fund vault");
+
+    let before = program.rpc().get_balance(&nest).expect("balance before");
+    let withdraw_tx = program
+        .request()
+        .accounts(vault_withdraw::accounts::SendOut {
+            user: user_new_address,
+            recipient,
+            nest,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::SendOut {amount: 890_881})
+        .signer(&user_new_keypair)
+        .send();
+    assert!(withdraw_tx.is_ok());
+    let after = program.rpc().get_balance(&nest).expect("balance before");
+    let error_text = format!("{withdraw_tx:?}");
+    // assert!(!error_text.contains("金额不能为0"), "{error_text}");
+    assert_eq!(after, 0)
+}
