@@ -8,4 +8,6 @@ pub enum ErrorCode {
     CounterOverflow,
     #[msg("金额不能为0")]
     ZeroAmount,
+    #[msg("账户已经关闭")]
+    AccountClosed,
 }

@@ -6,3 +6,9 @@ pub struct Counter {
     pub count: u64,
     pub authority: Pubkey,
 }
+
+#[account]
+#[derive(InitSpace)]
+pub struct NestState {
+    pub closed: bool,
+}

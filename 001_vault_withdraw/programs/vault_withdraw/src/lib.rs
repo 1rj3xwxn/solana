@@ -36,6 +36,12 @@ pub struct Pay<'info> {
         bump
     )]
     pub nest: SystemAccount<'info>,
+     #[account(
+        mut,
+        seeds = [b"nest_state", user.key().as_ref()],
+        bump
+    )]
+    pub nest_state: Account<'info, NestState>,
     pub system_program: Program<'info, System>,
 }
 
@@ -51,6 +57,40 @@ pub struct SendOut<'info> {
         bump
     )]
     pub nest: SystemAccount<'info>,
+    #[account(
+        mut,
+        seeds = [b"nest_state", user.key().as_ref()],
+        bump
+    )]
+    pub nest_state: Account<'info, NestState>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitNest<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+        init,
+        payer = user,
+        space = 8 + NestState::INIT_SPACE,
+        seeds = [b"nest_state", user.key().as_ref()],
+        bump
+    )]
+    pub nest: Account<'info, NestState>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SetState<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"nest_state", user.key().as_ref()],
+        bump
+    )]
+    pub nest: Account<'info, NestState>,
     pub system_program: Program<'info, System>,
 }
 
@@ -89,6 +129,7 @@ pub mod vault_withdraw {
     }
 
     pub fn pay(ctx: Context<Pay>) -> Result<()> {
+        require!(ctx.accounts.nest_state.closed == false, ErrorCode::AccountClosed);
         let user_key = ctx.accounts.user.key();
         let bump = [ctx.bumps.nest];
         let signer_seeds: &[&[&[u8]]] = &[&[b"nest", user_key.as_ref(), bump.as_ref()]];
@@ -106,7 +147,17 @@ pub mod vault_withdraw {
         Ok(())
     }
 
-     pub fn send_out(ctx: Context<SendOut>, amount: u64) -> Result<()> {
+    pub fn init_state(ctx: Context<InitNest>) -> Result<()> {
+        ctx.accounts.nest.closed = false;
+        Ok(())
+    }
+     pub fn set_state(ctx: Context<SetState>, state: bool) -> Result<()> {
+        ctx.accounts.nest.closed = state;
+        Ok(())
+    }
+
+    pub fn send_out(ctx: Context<SendOut>, amount: u64) -> Result<()> {
+        require!(ctx.accounts.nest_state.closed == false, ErrorCode::AccountClosed);
         require!(amount > 0, ErrorCode::ZeroAmount);
         let user_key = ctx.accounts.user.key();
         let bump = [ctx.bumps.nest];
