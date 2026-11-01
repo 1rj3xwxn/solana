@@ -94,6 +94,20 @@ pub struct SetState<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct CloseNestState<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+        mut,
+        close= user,
+        seeds = [b"nest_state", user.key().as_ref()],
+        bump
+    )]
+    pub nest: Account<'info, NestState>,
+    pub system_program: Program<'info, System>,
+}
+
 #[program]
 pub mod vault_withdraw {
     use super::*;
@@ -173,6 +187,11 @@ pub mod vault_withdraw {
             signer_seeds,
         );
         anchor_lang::system_program::transfer(cpi_ctx, amount)?;
+        Ok(())
+    }
+
+    pub fn close_nest_state(ctx: Context<CloseNestState>) -> Result<()> {
+        require!(ctx.accounts.nest.closed == true, ErrorCode::CloseError);
         Ok(())
     }
 }

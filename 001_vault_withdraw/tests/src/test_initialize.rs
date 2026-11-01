@@ -75,12 +75,12 @@ fn test_withdraw() {
     println!("user = {user}");
 
     println!("用 vault 和用户公钥推导金库地址");
-    let (vault, bump) = Pubkey::find_program_address(&[b"vault", user.as_ref()], &program_id);
+    let (vault, _) = Pubkey::find_program_address(&[b"vault", user.as_ref()], &program_id);
     let (nest_state, bump) =
         Pubkey::find_program_address(&[b"nest_state", user.as_ref()], &program_id);
     println!("vault = {vault}, bump = {bump}");
 
-    let withdraw_tx = program
+    let _ = program
         .request()
         .accounts(vault_withdraw::accounts::InitNest {
             user,
@@ -157,10 +157,10 @@ fn test_pay() {
     println!("user = {user}");
 
     println!("用 vault 和用户公钥推导金库地址");
-    let (nest, bump) = Pubkey::find_program_address(&[b"nest", user.as_ref()], &program_id);
+    let (nest, _) = Pubkey::find_program_address(&[b"nest", user.as_ref()], &program_id);
     let (nest_state, bump) =
         Pubkey::find_program_address(&[b"nest_state", user.as_ref()], &program_id);
-    let withdraw_tx = program
+    let _ = program
         .request()
         .accounts(vault_withdraw::accounts::InitNest {
             user,
@@ -240,15 +240,13 @@ fn test_pay_add_nest_state() {
     println!("user = {user}");
     let user_new_keypair = solana_keypair::Keypair::new();
     let user_new_address = user_new_keypair.pubkey();
-    let user_new_program_id = Pubkey::try_from(user_new_address).unwrap();
-     let user_new_program = client.program(user_new_program_id).unwrap();
 
-    let (nest, bump) =
+    let (nest, _) =
         Pubkey::find_program_address(&[b"nest", &user_new_address.as_ref()], &program_id);
-    let (nest_state, bump) =
+    let (nest_state, _) =
         Pubkey::find_program_address(&[b"nest_state", &user_new_address.as_ref()], &program_id);
 
-     let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -257,7 +255,7 @@ fn test_pay_add_nest_state() {
         ))
         .send()
         .expect("fund vault");
-    let withdraw_tx = program
+    program
         .request()
         .accounts(vault_withdraw::accounts::InitNest {
             user: user_new_address,
@@ -281,12 +279,10 @@ fn test_pay_add_nest_state() {
         .send()
         .expect("close nest");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
-            &user,
-            &nest,
-            2_050_000,
+            &user, &nest, 2_050_000,
         ))
         // .signer(&user_new_keypair)
         .send()
@@ -340,11 +336,11 @@ fn test_send_out() {
     println!("user = {user}");
 
     println!("用 vault 和用户公钥推导金库地址");
-    let (nest, bump) = Pubkey::find_program_address(&[b"nest", user.as_ref()], &program_id);
+    let (nest, _) = Pubkey::find_program_address(&[b"nest", user.as_ref()], &program_id);
     let (nest_state, bump) =
         Pubkey::find_program_address(&[b"nest_state", user.as_ref()], &program_id);
     println!("nest = {nest}, bump = {bump}");
-    let withdraw_tx = program
+    let _ = program
         .request()
         .accounts(vault_withdraw::accounts::InitNest {
             user,
@@ -445,7 +441,7 @@ fn test_send_out_failed() {
     println!("用 vault 和用户公钥推导金库地址");
     let user_new_keypair = solana_keypair::Keypair::new();
     let user_new_address = user_new_keypair.pubkey();
-    let (nest, bump) =
+    let (nest, _) =
         Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
     let (nest_state, bump) =
         Pubkey::find_program_address(&[b"nest_state", user_new_address.as_ref()], &program_id);
@@ -461,7 +457,7 @@ fn test_send_out_failed() {
         .expect("fund vault");
     println!("fund signature = {fund_tx}");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -564,7 +560,7 @@ fn test_send_out_seeds_error() {
         .expect("fund vault");
     println!("fund signature = {fund_tx}");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -587,9 +583,9 @@ fn test_send_out_seeds_error() {
         .expect("fund vault");
     println!("fund signature = {fund_tx}");
 
-    let (nest_state, bump) =
+    let (nest_state, _) =
         Pubkey::find_program_address(&[b"nest_state", user.as_ref()], &program_id);
-    let withdraw_tx = program
+    let _ = program
         .request()
         .accounts(vault_withdraw::accounts::InitNest {
             user,
@@ -772,7 +768,7 @@ fn test_send_out_when_balance_insufficient() {
         .expect("fund vault");
     println!("fund signature = {fund_tx}");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -845,9 +841,9 @@ fn test_send_out_when_balance_below_rent_exempt() {
     let user = payer.pubkey();
     let user_new_keypair = solana_keypair::Keypair::new();
     let user_new_address = user_new_keypair.pubkey();
-    let (nest, bump) =
+    let (nest, _) =
         Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &nest, 2_900_001,
@@ -855,7 +851,7 @@ fn test_send_out_when_balance_below_rent_exempt() {
         .send()
         .expect("fund vault");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -867,7 +863,7 @@ fn test_send_out_when_balance_below_rent_exempt() {
 
     let recipient_keypair = solana_keypair::Keypair::new();
     let recipient = recipient_keypair.pubkey();
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &recipient, 2_800_000,
@@ -921,7 +917,7 @@ fn test_send_out_when_balance_equal_rent_exempt() {
     let user_new_address = user_new_keypair.pubkey();
     let (nest, _bump) =
         Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &nest, 890_881,
@@ -929,7 +925,7 @@ fn test_send_out_when_balance_equal_rent_exempt() {
         .send()
         .expect("fund vault");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -941,7 +937,7 @@ fn test_send_out_when_balance_equal_rent_exempt() {
 
     let recipient_keypair = solana_keypair::Keypair::new();
     let recipient = recipient_keypair.pubkey();
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &recipient, 2_800_000,
@@ -990,9 +986,9 @@ fn test_send_out_when_balance_equal_zero() {
     let user = payer.pubkey();
     let user_new_keypair = solana_keypair::Keypair::new();
     let user_new_address = user_new_keypair.pubkey();
-    let (nest, bump) =
+    let (nest, _) =
         Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &nest, 890_881,
@@ -1000,7 +996,7 @@ fn test_send_out_when_balance_equal_zero() {
         .send()
         .expect("fund vault");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -1012,7 +1008,7 @@ fn test_send_out_when_balance_equal_zero() {
 
     let recipient_keypair = solana_keypair::Keypair::new();
     let recipient = recipient_keypair.pubkey();
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &recipient, 2_800_000,
@@ -1062,9 +1058,9 @@ fn test_send_out_when_balance_equal_zero2() {
     let user = payer.pubkey();
     let user_new_keypair = solana_keypair::Keypair::new();
     let user_new_address = user_new_keypair.pubkey();
-    let (nest, bump) =
+    let (nest, _) =
         Pubkey::find_program_address(&[b"nest", user_new_address.as_ref()], &program_id);
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &nest, 890_881,
@@ -1072,7 +1068,7 @@ fn test_send_out_when_balance_equal_zero2() {
         .send()
         .expect("fund vault");
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -1084,7 +1080,7 @@ fn test_send_out_when_balance_equal_zero2() {
 
     let recipient_keypair = solana_keypair::Keypair::new();
     let recipient = recipient_keypair.pubkey();
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &recipient, 2_800_000,
@@ -1149,10 +1145,10 @@ fn test_init_nest() {
     let user = payer.pubkey();
     let user_new_keypair = solana_keypair::Keypair::new();
     let user_new_address = user_new_keypair.pubkey();
-    let (nest, bump) =
+    let (nest, _) =
         Pubkey::find_program_address(&[b"nest_state", user_new_address.as_ref()], &program_id);
 
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user,
@@ -1164,7 +1160,7 @@ fn test_init_nest() {
 
     let recipient_keypair = solana_keypair::Keypair::new();
     let recipient = recipient_keypair.pubkey();
-    let fund_tx = program
+    program
         .request()
         .instruction(solana_system_interface::instruction::transfer(
             &user, &recipient, 2_800_000,
@@ -1172,7 +1168,6 @@ fn test_init_nest() {
         .send()
         .expect("fund vault");
 
-    let before = program.rpc().get_balance(&nest).expect("balance before");
     let withdraw_tx = program
         .request()
         .accounts(vault_withdraw::accounts::InitNest {
@@ -1204,7 +1199,7 @@ fn test_set_state() {
     let user = payer.pubkey();
     let user_new_keypair = solana_keypair::Keypair::new();
     let user_new_address = user_new_keypair.pubkey();
-    let (nest, bump) =
+    let (nest, _) =
         Pubkey::find_program_address(&[b"nest_state", user_new_address.as_ref()], &program_id);
 
     program
@@ -1227,8 +1222,7 @@ fn test_set_state() {
         .send()
         .expect("fund vault");
 
-    program.rpc().get_balance(&nest).expect("balance before");
-    let withdraw_tx = program
+    let _ = program
         .request()
         .accounts(vault_withdraw::accounts::InitNest {
             user: user_new_address,
@@ -1345,4 +1339,190 @@ fn test_send_out_when_closed() {
     assert!(error_text.contains("账户已经关闭"), "{error_text}");
     let after = program.rpc().get_balance(&nest).expect("balance after");
     assert_eq!(after, before);
+}
+
+#[test]
+fn test_close_nest_state() {
+    let program_id = "5owRe6K1Yhn2f34HSiR7zh54Dne6xqwzjaKz9tr2EtKp";
+    let anchor_wallet = std::env::var("ANCHOR_WALLET").unwrap();
+    let payer = read_keypair_file(&anchor_wallet).unwrap();
+    let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
+    let program_id = Pubkey::try_from(program_id).unwrap();
+    let program = client.program(program_id).unwrap();
+    let payer_address = payer.pubkey();
+    let user_new_keypair = solana_keypair::Keypair::new();
+    let user = user_new_keypair.pubkey();
+    let (nest, _bump) = Pubkey::find_program_address(&[b"nest", user.as_ref()], &program_id);
+    let (nest_state, _bump) =
+        Pubkey::find_program_address(&[b"nest_state", user.as_ref()], &program_id);
+
+    program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &payer_address,
+            &user,
+            2_000_011,
+        ))
+        .send()
+        .expect("fund user");
+    program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &payer_address,
+            &nest,
+            2_000_000,
+        ))
+        .send()
+        .expect("fund nest");
+
+    let recipient_keypair = solana_keypair::Keypair::new();
+    let recipient = recipient_keypair.pubkey();
+    program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &payer_address,
+            &recipient,
+            2_000_000,
+        ))
+        .send()
+        .expect("fund recipient");
+
+    program
+        .request()
+        .accounts(vault_withdraw::accounts::InitNest {
+            user,
+            nest: nest_state,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::InitState {})
+        .signer(&user_new_keypair)
+        .send()
+        .expect("init nest state");
+    let nest_state_read_test = program
+        .account::<vault_withdraw::NestState>(nest_state)
+        .expect("read nest state");
+    assert!(!nest_state_read_test.closed);
+    program
+        .request()
+        .accounts(vault_withdraw::accounts::SetState {
+            user,
+            nest: nest_state,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::SetState { state: true })
+        .signer(&user_new_keypair)
+        .send()
+        .expect("close nest");
+
+    let before = program.rpc().get_balance(&nest).expect("balance before");
+    let withdraw_tx = program
+        .request()
+        .accounts(vault_withdraw::accounts::CloseNestState {
+            user,
+            nest: nest_state,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::CloseNestState {})
+        .signer(&user_new_keypair)
+        .send();
+    assert!(withdraw_tx.is_ok());
+    let nest_state_read_test = program.account::<vault_withdraw::NestState>(nest_state);
+    assert!(nest_state_read_test.is_err());
+    let after = program.rpc().get_balance(&nest).expect("balance after");
+    assert_eq!(after, before);
+}
+
+#[test]
+fn test_close_nest_state_returns_rent_to_user() {
+    let program_id = "5owRe6K1Yhn2f34HSiR7zh54Dne6xqwzjaKz9tr2EtKp";
+    let anchor_wallet = std::env::var("ANCHOR_WALLET").unwrap();
+    let payer = read_keypair_file(&anchor_wallet).unwrap();
+    let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
+    let program_id = Pubkey::try_from(program_id).unwrap();
+    let program = client.program(program_id).unwrap();
+    let payer_address = payer.pubkey();
+    let user_new_keypair = solana_keypair::Keypair::new();
+    let user = user_new_keypair.pubkey();
+    let (nest, _bump) = Pubkey::find_program_address(&[b"nest", user.as_ref()], &program_id);
+    let (nest_state, _bump) =
+        Pubkey::find_program_address(&[b"nest_state", user.as_ref()], &program_id);
+
+    program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &payer_address,
+            &user,
+            2_000_011,
+        ))
+        .send()
+        .expect("fund user");
+    program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &payer_address,
+            &nest,
+            2_000_000,
+        ))
+        .send()
+        .expect("fund nest");
+
+    let recipient_keypair = solana_keypair::Keypair::new();
+    let recipient = recipient_keypair.pubkey();
+    program
+        .request()
+        .instruction(solana_system_interface::instruction::transfer(
+            &payer_address,
+            &recipient,
+            2_000_000,
+        ))
+        .send()
+        .expect("fund recipient");
+
+    program
+        .request()
+        .accounts(vault_withdraw::accounts::InitNest {
+            user,
+            nest: nest_state,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::InitState {})
+        .signer(&user_new_keypair)
+        .send()
+        .expect("init nest state");
+    let nest_state_read_test = program
+        .account::<vault_withdraw::NestState>(nest_state)
+        .expect("read nest state");
+    assert!(!nest_state_read_test.closed);
+    program
+        .request()
+        .accounts(vault_withdraw::accounts::SetState {
+            user,
+            nest: nest_state,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::SetState { state: true })
+        .signer(&user_new_keypair)
+        .send()
+        .expect("close nest");
+
+    let before = program.rpc().get_balance(&nest).expect("balance before");
+    let user_before = program.rpc().get_balance(&user).expect("balance before");
+    let nest_state_before = program.rpc().get_balance(&nest_state).expect("balance before");
+    let withdraw_tx = program
+        .request()
+        .accounts(vault_withdraw::accounts::CloseNestState {
+            user,
+            nest: nest_state,
+            system_program: solana_sdk_ids::system_program::id(),
+        })
+        .args(vault_withdraw::instruction::CloseNestState {})
+        .signer(&user_new_keypair)
+        .send();
+    assert!(withdraw_tx.is_ok());
+    let nest_state_read_test = program.account::<vault_withdraw::NestState>(nest_state);
+    assert!(nest_state_read_test.is_err());
+    let after = program.rpc().get_balance(&nest).expect("balance after");
+    let user_after = program.rpc().get_balance(&user).expect("balance after");
+    assert_eq!(after, before);
+    assert_eq!(user_after-user_before, nest_state_before);
 }

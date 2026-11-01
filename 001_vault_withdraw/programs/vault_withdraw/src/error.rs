@@ -10,4 +10,6 @@ pub enum ErrorCode {
     ZeroAmount,
     #[msg("账户已经关闭")]
     AccountClosed,
+    #[msg("账户关闭失败")]
+    CloseError,
 }
