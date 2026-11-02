@@ -194,4 +194,13 @@ pub mod vault_withdraw {
         require!(ctx.accounts.nest.closed == true, ErrorCode::CloseError);
         Ok(())
     }
+
+    /// 从该用户的代币金库转出 `amount` 个代币，进入该用户自己的代币账户。
+    ///
+    /// `ctx` 里的 `pot` 是来源代币账户的 authority，本身不持有代币。
+    /// `amount` 是转出数量，必须大于 0。
+    /// 成功时返回 `Ok(())`。
+    pub fn release_token(ctx: Context<ReleaseToken>, amount: u64) -> Result<()> {
+        instructions::release_token::handle_release_token(ctx, amount)
+    }
 }
